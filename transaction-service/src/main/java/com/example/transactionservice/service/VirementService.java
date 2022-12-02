@@ -3,63 +3,87 @@ package com.example.transactionservice.service;
 import com.example.transactionservice.entities.Virement;
 import com.example.transactionservice.enums.StatutVirement;
 import com.example.transactionservice.models.Compte;
+import com.example.transactionservice.models.TransactionAnswer;
 import com.example.transactionservice.repositories.TransactionRepository;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-@Service
-public class VirementService {
+import java.util.Optional;
+import java.util.logging.Logger;
 
+@Service
+@AllArgsConstructor
+public class VirementService {
     private CompteRestClient compteRestClient ;
     private TransactionRepository transactionRepository;
 
     public ResponseEntity<String> sendMoney(Virement virement) {
-        Compte compteEmetteur = compteRestClient.accountById(virement.getIdCompteEmetteur());
+        try {
+            Compte compteRecepteur = compteRestClient.accountByNumero(virement.getNumCompteRecepteur());
+            Compte compteEmetteur = compteRestClient.accountByNumero(virement.getNumCompteEmetteur());
 
-        // Vérifie si le compte emetteur a un solde suffisant pour l'envoi
-        if (compteEmetteur.getSolde()>=virement.getMontant()) {
+            // Vérifie si le compte emetteur a un solde suffisant pour l'envoi
+            if (compteEmetteur.getSolde()>=virement.getMontant()) {
 
-            // Modifie le solde du client emetteur
-            compteEmetteur.setSolde(compteEmetteur.getSolde()-virement.getMontant());
-            compteRestClient.updateAccount(compteEmetteur);
+                // Modifie le solde du client emetteur
+                compteEmetteur.setSolde(compteEmetteur.getSolde()-virement.getMontant());
+                compteRestClient.updateAccount(compteEmetteur.getId(), compteEmetteur);
 
-            // Modifie le statut du virement
-            virement.setStatut(StatutVirement.EN_COURS);
+                // Modifie le statut du virement
+                virement.setStatut(StatutVirement.EN_COURS);
+                transactionRepository.save(virement);
+                return new ResponseEntity<>("Virement effectué avec succès. En attente de la confirmation du récepteur", HttpStatus.OK);
+            }
+            virement.setStatut(StatutVirement.ECHEC);
             transactionRepository.save(virement);
-            return new ResponseEntity<>("Virement effectué avec succès. En attente de la confirmation du récepteur", HttpStatus.OK);
-        }
-        virement.setStatut(StatutVirement.ECHEC);
-        transactionRepository.save(virement);
-        return new ResponseEntity<>("Solde du compte émetteur insuffisant", HttpStatus.NOT_ACCEPTABLE);
-    }
+            return new ResponseEntity<>("Solde du compte émetteur insuffisant", HttpStatus.NOT_ACCEPTABLE);
 
-    public ResponseEntity<String> receiveMoney(Long idVirement, String reponse) {
+        }
+        catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
+        }
+            }
+
+    public ResponseEntity<String> receiveMoney(String idVirement, TransactionAnswer reponse) {
         // Récupère le virement dont l'id est passé en paramètre
-        Virement virement = transactionRepository.findById(idVirement).get();
+        Optional<Virement> virementOptional = transactionRepository.findById(idVirement);
 
         // Retourne une réponse négative si le virement n'existe pas
-        if (virement.equals(null))
-            return new ResponseEntity<> ("Le virement recherché est introuvable", HttpStatus.NOT_FOUND);
+        if (virementOptional.isEmpty())
+            return new ResponseEntity<>("Le virement recherché est introuvable", HttpStatus.NOT_FOUND);
+        Virement virement = virementOptional.get();
+        // Vérifie si la transaction est toujours en cours. Dans le cas contraire ne pas créditer le compte
+        if (!virement.getStatut().equals(StatutVirement.EN_COURS))
+            return new ResponseEntity<>("Le virement mentionné a déjà été effectué ou annulé", HttpStatus.FORBIDDEN);
 
-        Compte compteRecepteur = compteRestClient.accountById(virement.getIdCompteRecepteur());
+        // Vérifie si le numéro de compte passé dans le corps de la requête est bien celui du destinataire
+        if (!reponse.getNumCompte().equals(virement.getNumCompteRecepteur()))
+            return new ResponseEntity<>("Le numéro de compte fourni ne correspond pas au numéro de compte destinataire", HttpStatus.FORBIDDEN);
 
-        // Vérifie si la réponse à la question du virement est la bonne
-        if (virement.getReponse()==reponse){
+        try {
+            Compte compteRecepteur = compteRestClient.accountByNumero(virement.getNumCompteRecepteur());
 
-            // Modifie le solde du client récepteur
-            compteRecepteur.setSolde(compteRecepteur.getSolde()+virement.getMontant());
-            compteRestClient.updateAccount(compteRecepteur);
+            // Vérifie si la réponse à la question du virement est la bonne
+            if (virement.getReponse().equals(reponse.getResponse())) {
 
-            // Modifie le statut du virement
-            virement.setStatut(StatutVirement.EFFECTUE);
-            /* TODO: Ajout ou update dans la base de données Virement à l'aide du repository */
-            transactionRepository.save(virement);
-            return new ResponseEntity<>("Virement terminé. Le compte récepteur a été crédité", HttpStatus.OK);
+                // Modifie le solde du client récepteur
+                compteRecepteur.setSolde(compteRecepteur.getSolde() + virement.getMontant());
+                compteRestClient.updateAccount(compteRecepteur.getId(), compteRecepteur);
 
+                // Modifie le statut du virement
+                virement.setStatut(StatutVirement.EFFECTUE);
+                transactionRepository.save(virement);
+                return new ResponseEntity<>("Virement terminé. Le compte récepteur a été crédité", HttpStatus.OK);
+
+            }
+            return new ResponseEntity<>("Transaction refusée : La réponse fournie à la question secrète est incorrecte", HttpStatus.NOT_ACCEPTABLE);
+
+
+        } catch (Exception e) {
+            return new ResponseEntity<>("Le compte récepteur associé à ce virement est introuvable", HttpStatus.FORBIDDEN);
         }
-        return new ResponseEntity<>("Transaction refusée : La réponse fournie à la question secrète est incorrecte", HttpStatus.NOT_ACCEPTABLE);
-
     }
 }

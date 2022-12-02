@@ -1,9 +1,14 @@
 version : "3.8"
 services:
+
   discovery:
-    image: consul:1.7
+    image: consul:1.14
+    container_name: consul-server1
+    restart: unless-stopped
     ports:
-      - 8500:8500
+        - 8500:8500
+
+    command: consul agent -server -dev -client 0.0.0.0 -bootstrap-expect=1 -data-dir=/consul/data -ui
   mongodb:
     image: mongo
     container_name: mongodb
@@ -30,3 +35,5 @@ volumes:
 networks:
   default:
     name: mongodb_network
+  consul:
+    driver: bridge

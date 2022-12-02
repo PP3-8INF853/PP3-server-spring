@@ -2,24 +2,46 @@ package com.example.accountservice.services;
 
 import com.example.accountservice.entities.Compte;
 import com.example.accountservice.repositories.AccountRepository;
+import lombok.AllArgsConstructor;
+import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.NoSuchElementException;
+import java.util.Optional;
+
 @Service
+@AllArgsConstructor
 public class AccountService {
     AccountRepository accountRepository;
 
-    public ResponseEntity<Compte> getAccount (Long id){
-        if (accountRepository.findById(id).isPresent()) {
-            Compte compte = accountRepository.findById(id).get();
-            return  new ResponseEntity<>(compte, HttpStatus.OK);
-        }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    public Compte findAccountById (String id){
+        return  accountRepository.findById(id).get();
     }
 
-    public ResponseEntity<Compte> updateAccount (Compte compte){
-            accountRepository.save(compte);
-            return  new ResponseEntity<>(accountRepository.findById(compte.getId()).get(), HttpStatus.OK);
+    public Compte findAccountByNumero (String numero){
+        return  accountRepository.findByNumero(numero).get();
+    }
+    public String saveAccount (Compte compte){
+        try {
+            return accountRepository.save(compte).getId();
+        } catch (Exception e) {
+            return e.getMessage();
+        }
+    }
+
+    public String updateAccount(String id, Compte compte) {
+        Optional<Compte> oldCompteOptional = accountRepository.findById(id);
+        if (oldCompteOptional.isPresent()){
+            Compte compteToSave = oldCompteOptional.get();
+            compteToSave.setNumero(compte.getNumero() != null ? compte.getNumero() : compteToSave.getNumero() );
+            compteToSave.setSolde(compte.getSolde());
+            return  accountRepository.save(compteToSave).getId();
+        }
+        else {
+            throw new NoSuchElementException();
+        }
+
     }
 }

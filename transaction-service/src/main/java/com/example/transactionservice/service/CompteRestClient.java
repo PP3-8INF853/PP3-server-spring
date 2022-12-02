@@ -2,23 +2,19 @@ package com.example.transactionservice.service;
 
 import com.example.transactionservice.models.Compte;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 @FeignClient(name = "account-service")
 public interface CompteRestClient {
 
-    @GetMapping("/customers/{id}?projection=fullCustomer")
-    public Compte accountById (@PathVariable Long id);
+    @GetMapping("/accounts/numero/{numero}")
+    public Compte accountByNumero(@PathVariable String numero);
 
-    @PutMapping("/customers/{id}?projection=fullCustomer")
-    public Compte updateAccount (@RequestParam Compte compte);
-    @GetMapping("/customers/{id}?projection=fullCustomer")
-    public void retrieveAmount (@RequestParam Long id, @RequestParam double amount );
+    @PostMapping("/accounts")
+    public String saveAccount (@RequestBody Compte compte);
 
-    @GetMapping("/customers/{id}?projection=fullCustomer")
-    public void addAmount (@RequestParam Long id, @RequestParam double amount );
+    @PutMapping("/accounts/{id}")
+    public String updateAccount (@PathVariable String id, @RequestBody Compte compte);
+
 
 }

@@ -4,8 +4,8 @@ import lombok.Data;
 
 @Data
 public class Compte {
-    private Long id;
-    private Long numero;
+    private String id;
+    private String numero;
     private double solde;
 
 }
