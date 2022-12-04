@@ -10,6 +10,10 @@ public interface CompteRestClient {
     @GetMapping("/accounts/numero/{numero}")
     public Compte accountByNumero(@PathVariable String numero);
 
+    @GetMapping("/accounts/{id}")
+    public Compte accountById(@PathVariable String id);
+
+
     @PostMapping("/accounts")
     public String saveAccount (@RequestBody Compte compte);
 

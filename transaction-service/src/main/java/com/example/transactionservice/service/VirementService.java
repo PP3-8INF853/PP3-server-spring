@@ -1,18 +1,19 @@
 package com.example.transactionservice.service;
 
 import com.example.transactionservice.entities.Virement;
+import com.example.transactionservice.entities.VirementSendDTO;
 import com.example.transactionservice.enums.StatutVirement;
 import com.example.transactionservice.models.Compte;
-import com.example.transactionservice.models.TransactionAnswer;
+import com.example.transactionservice.entities.VirementReceiveDTO;
 import com.example.transactionservice.repositories.TransactionRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
-import java.util.logging.Logger;
 
 @Service
 @AllArgsConstructor
@@ -20,25 +21,38 @@ public class VirementService {
     private CompteRestClient compteRestClient ;
     private TransactionRepository transactionRepository;
 
-    public ResponseEntity<String> sendMoney(Virement virement) {
+    public ResponseEntity<String> sendMoney(VirementSendDTO virementSendDTO) {
         try {
-            Compte compteRecepteur = compteRestClient.accountByNumero(virement.getNumCompteRecepteur());
-            Compte compteEmetteur = compteRestClient.accountByNumero(virement.getNumCompteEmetteur());
+            Compte compteRecepteur = compteRestClient.accountByNumero(virementSendDTO.getNumCompteRecepteur());
+            Compte compteEmetteur = compteRestClient.accountByNumero(virementSendDTO.getNumCompteEmetteur());
 
             // Vérifie si le compte emetteur a un solde suffisant pour l'envoi
-            if (compteEmetteur.getSolde()>=virement.getMontant()) {
+            if (compteEmetteur.getSolde()>=virementSendDTO.getMontant()) {
 
                 // Modifie le solde du client emetteur
-                compteEmetteur.setSolde(compteEmetteur.getSolde()-virement.getMontant());
+                compteEmetteur.setSolde(compteEmetteur.getSolde()-virementSendDTO.getMontant());
                 compteRestClient.updateAccount(compteEmetteur.getId(), compteEmetteur);
 
-                // Modifie le statut du virement
-                virement.setStatut(StatutVirement.EN_COURS);
+                // Définit le virement à persister dans la bd
+                Virement virement = Virement.builder()
+                        .compteEmetteur(compteEmetteur)
+                        .compteRecepteur(compteRecepteur)
+                        .dateEnvoi(LocalDateTime.now())
+                        .montant(virementSendDTO.getMontant())
+                        .statut(StatutVirement.EN_COURS)
+                        .question(virementSendDTO.getQuestion())
+                        .reponse(virementSendDTO.getReponse())
+                        .idCompteEmetteur(compteEmetteur.getId())
+                        .idCompteRecepteur(compteRecepteur.getId())
+                        .build();
+
+
+                // Sauvegarde le virement dans la bd
                 transactionRepository.save(virement);
                 return new ResponseEntity<>("Virement effectué avec succès. En attente de la confirmation du récepteur", HttpStatus.OK);
             }
-            virement.setStatut(StatutVirement.ECHEC);
-            transactionRepository.save(virement);
+/*            virement.setStatut(StatutVirement.ECHEC);
+            transactionRepository.save(virement);*/
             return new ResponseEntity<>("Solde du compte émetteur insuffisant", HttpStatus.NOT_ACCEPTABLE);
 
         }
@@ -47,7 +61,7 @@ public class VirementService {
         }
             }
 
-    public ResponseEntity<String> receiveMoney(String idVirement, TransactionAnswer reponse) {
+    public ResponseEntity<String> receiveMoney(String idVirement, VirementReceiveDTO reponse) {
         // Récupère le virement dont l'id est passé en paramètre
         Optional<Virement> virementOptional = transactionRepository.findById(idVirement);
 
@@ -60,11 +74,11 @@ public class VirementService {
             return new ResponseEntity<>("Le virement mentionné a déjà été effectué ou annulé", HttpStatus.FORBIDDEN);
 
         // Vérifie si le numéro de compte passé dans le corps de la requête est bien celui du destinataire
-        if (!reponse.getNumCompte().equals(virement.getNumCompteRecepteur()))
+        if (!reponse.getIdCompte().equals(virement.getIdCompteRecepteur()))
             return new ResponseEntity<>("Le numéro de compte fourni ne correspond pas au numéro de compte destinataire", HttpStatus.FORBIDDEN);
 
         try {
-            Compte compteRecepteur = compteRestClient.accountByNumero(virement.getNumCompteRecepteur());
+            Compte compteRecepteur = compteRestClient.accountById(virement.getIdCompteRecepteur());
 
             // Vérifie si la réponse à la question du virement est la bonne
             if (virement.getReponse().equals(reponse.getResponse())) {
@@ -73,8 +87,11 @@ public class VirementService {
                 compteRecepteur.setSolde(compteRecepteur.getSolde() + virement.getMontant());
                 compteRestClient.updateAccount(compteRecepteur.getId(), compteRecepteur);
 
-                // Modifie le statut du virement
+                // Modifie le statut du virement et la date de recepetion
                 virement.setStatut(StatutVirement.EFFECTUE);
+                virement.setDateReception(LocalDateTime.now());
+
+                // Enregistre le virement dans la bd
                 transactionRepository.save(virement);
                 return new ResponseEntity<>("Virement terminé. Le compte récepteur a été crédité", HttpStatus.OK);
 
@@ -85,5 +102,9 @@ public class VirementService {
         } catch (Exception e) {
             return new ResponseEntity<>("Le compte récepteur associé à ce virement est introuvable", HttpStatus.FORBIDDEN);
         }
+    }
+
+    public ResponseEntity<List<Virement>> findTransactionsByAccountId(String id) {
+        return new ResponseEntity<>(transactionRepository.findAllByIdCompteEmetteurOrIdCompteRecepteur(id), HttpStatus.OK);
     }
 }
