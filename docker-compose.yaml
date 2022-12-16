@@ -9,15 +9,23 @@ services:
     image: consul:1.14
     container_name: consul-server1
     restart: unless-stopped
+    networks:
+      - consul
+    #extra_hosts:
+      #- "host.docker.internal"
     ports:
       - "8500:8500"
-    command: consul agent -server -dev -client 0.0.0.0 -bootstrap-expect=1 -data-dir=/consul/data -ui
+    command: consul agent -server -dev -client  '{{ GetAllInterfaces | include "network" "172.22.0.0/16" | join "address" " " }}'  -bootstrap-expect=1 -data-dir=/consul/data -ui
+
 
   gateway-service:
     container_name: gateway-service
     depends_on:
       - discovery
     restart: unless-stopped
+    networks:
+      consul:
+      #ipv4_address: 173.40.0.5
     build:
       context: ./gateway-service
       dockerfile: Dockerfile
@@ -26,7 +34,7 @@ services:
         condition: on-failure
         max_attempts: 3
     ports:
-      - '8888:4444'
+      - '4444:4444'
     environment:
       <<: *env-variables
 
@@ -35,6 +43,9 @@ services:
     depends_on:
       - gateway-service
     restart: unless-stopped
+    networks:
+      consul:
+      #ipv4_address: 173.40.0.6
     build:
       context: ./authentication-service
       dockerfile: Dockerfile
@@ -43,7 +54,7 @@ services:
         condition: on-failure
         max_attempts: 3
     ports:
-      - '81:6666'
+      - '6666:6666'
     environment:
       <<: *env-variables
 
@@ -52,6 +63,9 @@ services:
     depends_on:
       - authentication-service
     restart: unless-stopped
+    networks:
+      consul:
+      #ipv4_address: 173.40.0.7
     build:
       context: ./account-service
       dockerfile: Dockerfile
@@ -60,7 +74,7 @@ services:
         condition: on-failure
         max_attempts: 3
     ports:
-      - '82:7777'
+      - '7777:7777'
     environment:
       <<: *env-variables
 
@@ -69,6 +83,9 @@ services:
     depends_on:
       - gateway-service
     restart: unless-stopped
+    networks:
+      consul:
+      # ipv4_address: 173.40.0.8
     build:
       context: ./config-service
       dockerfile: Dockerfile
@@ -77,7 +94,7 @@ services:
         condition: on-failure
         max_attempts: 3
     ports:
-      - '83:5555'
+      - '5555:5555'
     environment:
       <<: *env-variables
 
@@ -87,6 +104,9 @@ services:
     depends_on:
       - account-service
     restart: unless-stopped
+    networks:
+      consul:
+      #ipv4_address: 173.40.0.9
     build:
       context: ./statement-service
       dockerfile: Dockerfile
@@ -95,7 +115,7 @@ services:
         condition: on-failure
         max_attempts: 3
     ports:
-      - '84:3333'
+      - '3333:3333'
     environment:
       <<: *env-variables
 
@@ -104,6 +124,9 @@ services:
     depends_on:
       - account-service
     restart: unless-stopped
+    networks:
+      consul:
+      #ipv4_address: 173.40.0.10
     build:
       context: ./transaction-service
       dockerfile: Dockerfile
@@ -112,7 +135,7 @@ services:
         condition: on-failure
         max_attempts: 3
     ports:
-      - '85:2222'
+      - '2222:2222'
     environment:
       <<: *env-variables
 
@@ -120,4 +143,10 @@ volumes:
   PP3:
 networks:
   consul:
-    driver: bridge
+    external: true
+    name: consul
+    #ipam:
+      #config:
+        #- subnet: 173.40.0.0/24
+        #- gateway: 173.40.0.1
+    #driver: bridge
