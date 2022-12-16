@@ -6,12 +6,12 @@ x-common-variables: &env-variables
 
 services:
   discovery:
-    image: consul:1.14
+    image: consul:1.14.2
     container_name: consul-server1
     restart: unless-stopped
     ports:
       - "8500:8500"
-    command: consul agent -server -dev -client 0.0.0.0 -bootstrap-expect=1 -data-dir=/consul/data -ui
+    command: consul agent -server -bootstrap -client 0.0.0.0 -bind 0.0.0.0 -bootstrap-expect=1 -data-dir=/consul/data -ui
 
   gateway-service:
     container_name: gateway-service
@@ -26,7 +26,7 @@ services:
         condition: on-failure
         max_attempts: 3
     ports:
-      - '8888:4444'
+      - '4444:4444'
     environment:
       <<: *env-variables
 
@@ -43,7 +43,7 @@ services:
         condition: on-failure
         max_attempts: 3
     ports:
-      - '81:6666'
+      - '6666:6666'
     environment:
       <<: *env-variables
 
@@ -60,7 +60,7 @@ services:
         condition: on-failure
         max_attempts: 3
     ports:
-      - '82:7777'
+      - '7777:7777'
     environment:
       <<: *env-variables
 
@@ -77,7 +77,7 @@ services:
         condition: on-failure
         max_attempts: 3
     ports:
-      - '83:5555'
+      - '5555:5555'
     environment:
       <<: *env-variables
 
@@ -95,7 +95,7 @@ services:
         condition: on-failure
         max_attempts: 3
     ports:
-      - '84:3333'
+      - '3333:3333'
     environment:
       <<: *env-variables
 
@@ -112,12 +112,9 @@ services:
         condition: on-failure
         max_attempts: 3
     ports:
-      - '85:2222'
+      - '2222:2222'
     environment:
       <<: *env-variables
 
 volumes:
   PP3:
-networks:
-  consul:
-    driver: bridge
