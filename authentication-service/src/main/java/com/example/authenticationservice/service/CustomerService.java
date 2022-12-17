@@ -39,7 +39,7 @@ public class CustomerService {
 
         Compte compte = new Compte();
         compte.setSolde(0d);
-        compte.setNumero(String.valueOf(ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE + 1)));
+        compte.setNumero(String.valueOf(ThreadLocalRandom.current().nextInt(1, 34234 + 1)));
         compte.setUserId(customer.id);
 
         accountRepository.saveAccount(compte);
