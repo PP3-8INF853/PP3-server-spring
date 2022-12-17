@@ -20,4 +20,5 @@ public class Compte {
     @Indexed(unique=true)
     private String numero;
     private double solde;
+    private String userId;
 }
