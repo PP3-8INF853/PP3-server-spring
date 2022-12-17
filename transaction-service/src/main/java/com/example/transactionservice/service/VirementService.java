@@ -7,6 +7,10 @@ import com.example.transactionservice.models.Compte;
 import com.example.transactionservice.entities.VirementReceiveDTO;
 import com.example.transactionservice.repositories.TransactionRepository;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import lombok.extern.slf4j.XSlf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -17,9 +21,12 @@ import java.util.Optional;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class VirementService {
     private CompteRestClient compteRestClient ;
     private TransactionRepository transactionRepository;
+
+
 
     public ResponseEntity<String> sendMoney(VirementSendDTO virementSendDTO) {
         try {
@@ -49,15 +56,19 @@ public class VirementService {
 
                 // Sauvegarde le virement dans la bd
                 transactionRepository.save(virement);
+                log.info("Virement effectué avec succès");
                 return new ResponseEntity<>("Virement effectué avec succès. En attente de la confirmation du récepteur", HttpStatus.OK);
             }
 /*            virement.setStatut(StatutVirement.ECHEC);
             transactionRepository.save(virement);*/
+            log.error("Solde du compte non suffisant");
             return new ResponseEntity<>("Solde du compte émetteur insuffisant", HttpStatus.NOT_ACCEPTABLE);
 
         }
         catch (Exception e) {
+            log.error("Compte non trouvé");
             return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
+
         }
             }
 

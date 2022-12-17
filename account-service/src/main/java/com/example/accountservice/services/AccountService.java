@@ -3,6 +3,7 @@ package com.example.accountservice.services;
 import com.example.accountservice.entities.Compte;
 import com.example.accountservice.repositories.AccountRepository;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import java.util.Optional;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class AccountService {
     AccountRepository accountRepository;
 
@@ -21,6 +23,7 @@ public class AccountService {
     }
 
     public Compte findAccountByNumero (String numero){
+        log.info("Récupération du compte numero : " +numero);
         return  accountRepository.findByNumero(numero).get();
     }
     public String saveAccount (Compte compte){

@@ -17,7 +17,7 @@ public class AccountServiceApplication {
         SpringApplication.run(AccountServiceApplication.class, args);
     }
 
-/*    @Bean
+ /*   @Bean
     CommandLineRunner runner (  AccountRepository accountRepository ) {
         return args -> {
             Compte c1 = Compte.builder()
