@@ -3,6 +3,8 @@ package com.example.authenticationservice.controller;
 import com.example.authenticationservice.dto.CustomerLoginDTO;
 import com.example.authenticationservice.dto.CustomerSignUpDTO;
 import com.example.authenticationservice.service.CustomerService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.apache.http.client.methods.HttpPost;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

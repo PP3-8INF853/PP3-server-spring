@@ -3,7 +3,7 @@ WORKDIR app/
 COPY pom.xml .
 RUN mvn -e -B dependency:resolve
 COPY src ./src
-RUN mvn clean -e -B package
+RUN mvn clean -e -B package -DskipTests=true
 
 FROM amazoncorretto:17-alpine-jdk
 WORKDIR app/

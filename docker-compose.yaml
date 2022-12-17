@@ -38,30 +38,10 @@ services:
     environment:
       <<: *env-variables
 
-  authentication-service:
-    container_name: authentication-service
-    depends_on:
-      - gateway-service
-    restart: unless-stopped
-    networks:
-      consul:
-      #ipv4_address: 173.40.0.6
-    build:
-      context: ./authentication-service
-      dockerfile: Dockerfile
-    deploy:
-      restart_policy:
-        condition: on-failure
-        max_attempts: 3
-    ports:
-      - '6666:6666'
-    environment:
-      <<: *env-variables
-
   account-service:
     container_name: account-service
     depends_on:
-      - authentication-service
+      - gateway-service
     restart: unless-stopped
     networks:
       consul:
@@ -75,6 +55,26 @@ services:
         max_attempts: 3
     ports:
       - '7777:7777'
+    environment:
+      <<: *env-variables
+
+  authentication-service:
+    container_name: authentication-service
+    depends_on:
+      - account-service
+    restart: unless-stopped
+    networks:
+      consul:
+      #ipv4_address: 173.40.0.6
+    build:
+      context: ./authentication-service
+      dockerfile: Dockerfile
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    ports:
+      - '6666:6666'
     environment:
       <<: *env-variables
 
@@ -147,6 +147,6 @@ networks:
     name: consul
     #ipam:
       #config:
-        #- subnet: 173.40.0.0/24
-        #- gateway: 173.40.0.1
+        #- subnet: 172.22.0.0/16
+        #- gateway: 172.22.0.1
     #driver: bridge

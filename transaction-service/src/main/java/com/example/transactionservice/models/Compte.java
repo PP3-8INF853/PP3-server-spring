@@ -7,5 +7,6 @@ public class Compte {
     private String id;
     private String numero;
     private double solde;
+    private String userId;
 
 }
