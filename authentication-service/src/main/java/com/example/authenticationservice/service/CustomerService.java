@@ -4,7 +4,6 @@ import com.example.authenticationservice.dto.CustomerLoginDTO;
 import com.example.authenticationservice.dto.CustomerSignUpDTO;
 import com.example.authenticationservice.entities.Customer;
 import com.example.authenticationservice.repository.CustomerRepository;
-import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,10 +14,6 @@ import java.util.Optional;
 @Service
 public class CustomerService {
     CustomerRepository customerRepository;
-
-    public CustomerService(){
-
-    }
 
     @Autowired
     public CustomerService(CustomerRepository customerRepository){
