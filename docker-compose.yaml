@@ -1,0 +1,152 @@
+version : "3.9"
+
+x-common-variables: &env-variables
+  rootuser: 'Asa'
+  rootpass: 'FavRwReB2lnuleS9'
+
+services:
+  discovery:
+    image: consul:1.14
+    container_name: consul-server1
+    restart: unless-stopped
+    networks:
+      - consul
+    #extra_hosts:
+      #- "host.docker.internal"
+    ports:
+      - "8500:8500"
+    command: consul agent -server -dev -client  '{{ GetAllInterfaces | include "network" "172.22.0.0/16" | join "address" " " }}'  -bootstrap-expect=1 -data-dir=/consul/data -ui
+
+
+  gateway-service:
+    container_name: gateway-service
+    depends_on:
+      - discovery
+    restart: unless-stopped
+    networks:
+      consul:
+      #ipv4_address: 173.40.0.5
+    build:
+      context: ./gateway-service
+      dockerfile: Dockerfile
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    ports:
+      - '4444:4444'
+    environment:
+      <<: *env-variables
+
+  account-service:
+    container_name: account-service
+    depends_on:
+      - gateway-service
+    restart: unless-stopped
+    networks:
+      consul:
+      #ipv4_address: 173.40.0.7
+    build:
+      context: ./account-service
+      dockerfile: Dockerfile
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    ports:
+      - '7777:7777'
+    environment:
+      <<: *env-variables
+
+  authentication-service:
+    container_name: authentication-service
+    depends_on:
+      - account-service
+    restart: unless-stopped
+    networks:
+      consul:
+      #ipv4_address: 173.40.0.6
+    build:
+      context: ./authentication-service
+      dockerfile: Dockerfile
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    ports:
+      - '6666:6666'
+    environment:
+      <<: *env-variables
+
+  config-service:
+    container_name: config-service
+    depends_on:
+      - gateway-service
+    restart: unless-stopped
+    networks:
+      consul:
+      # ipv4_address: 173.40.0.8
+    build:
+      context: ./config-service
+      dockerfile: Dockerfile
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    ports:
+      - '5555:5555'
+    environment:
+      <<: *env-variables
+
+
+  statement-service:
+    container_name: statement-service
+    depends_on:
+      - account-service
+    restart: unless-stopped
+    networks:
+      consul:
+      #ipv4_address: 173.40.0.9
+    build:
+      context: ./statement-service
+      dockerfile: Dockerfile
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    ports:
+      - '3333:3333'
+    environment:
+      <<: *env-variables
+
+  transaction-service:
+    container_name: transaction-service
+    depends_on:
+      - account-service
+    restart: unless-stopped
+    networks:
+      consul:
+      #ipv4_address: 173.40.0.10
+    build:
+      context: ./transaction-service
+      dockerfile: Dockerfile
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    ports:
+      - '2222:2222'
+    environment:
+      <<: *env-variables
+
+volumes:
+  PP3:
+networks:
+  consul:
+    external: true
+    name: consul
+    #ipam:
+      #config:
+        #- subnet: 172.22.0.0/16
+        #- gateway: 172.22.0.1
+    #driver: bridge
