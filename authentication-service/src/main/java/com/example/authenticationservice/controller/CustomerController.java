@@ -32,6 +32,16 @@ public class CustomerController {
         return new ResponseEntity<>(this.customerService.findAll(), HttpStatus.OK);
     }
 
+    @GetMapping(value = "findById/{id}", produces = "application/json")
+    public @ResponseBody ResponseEntity<Object> getCustomerById( @PathVariable String id){
+        return new ResponseEntity<>(this.customerService.findById(id), HttpStatus.OK);
+    }
+
+    @GetMapping(value = "findCustomerAccount/{id}", produces = "application/json")
+    public @ResponseBody ResponseEntity<Object> getCustomerAccount( @PathVariable String id){
+        return new ResponseEntity<>(this.customerService.findCustomerAccount(id), HttpStatus.OK);
+    }
+
     @PostMapping(value = "signUp", produces = "application/json")
     public @ResponseBody ResponseEntity<Object> signup( @RequestBody String json){
         CustomerSignUpDTO customerSignUpDTO = new CustomerSignUpDTO();

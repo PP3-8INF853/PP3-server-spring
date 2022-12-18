@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -16,6 +17,9 @@ import java.util.Optional;
 public class AccountService {
     AccountRepository accountRepository;
 
+    public List<Compte> findAll(){
+        return this.accountRepository.findAll();
+    }
     public Compte findAccountById (String id){
         return  accountRepository.findById(id).get();
     }
