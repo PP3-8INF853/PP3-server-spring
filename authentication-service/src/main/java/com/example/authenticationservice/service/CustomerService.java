@@ -39,13 +39,10 @@ public class CustomerService {
 
         Compte compte = new Compte();
         compte.setSolde(0d);
-        compte.setNumero(String.valueOf(ThreadLocalRandom.current().nextInt(1, 34234 + 1)));
+        compte.setNumero(String.valueOf(ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE)));
         compte.setUserId(customer.id);
 
         accountRepository.saveAccount(compte);
-
-        //Util.makeHttpPostRequest("http://localhost:4444/account-service/accounts", compte);
-
         return customer;
     }
 
