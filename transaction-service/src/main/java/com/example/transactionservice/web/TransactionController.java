@@ -4,6 +4,7 @@ import com.example.transactionservice.entities.Virement;
 import com.example.transactionservice.entities.VirementReceiveDTO;
 import com.example.transactionservice.entities.VirementSendDTO;
 import com.example.transactionservice.service.VirementService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,9 +18,18 @@ public class TransactionController {
 
     @ResponseBody
     @PostMapping("/send")
-    public ResponseEntity<String> sendMoney(
-            @RequestBody VirementSendDTO virementSendDTO
+    public ResponseEntity<Object> sendMoney(
+            @RequestBody String json
     ){
+        VirementSendDTO virementSendDTO = new VirementSendDTO();
+
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            virementSendDTO = objectMapper.readValue(json, VirementSendDTO.class);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
         return virementService.sendMoney(virementSendDTO);
     }
 
