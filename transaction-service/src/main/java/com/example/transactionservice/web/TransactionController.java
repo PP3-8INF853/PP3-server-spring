@@ -6,10 +6,12 @@ import com.example.transactionservice.entities.VirementSendDTO;
 import com.example.transactionservice.service.VirementService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 public class TransactionController {
@@ -41,10 +43,19 @@ public class TransactionController {
 
     @ResponseBody
     @PostMapping("/receive/{idVirement}")
-    public ResponseEntity<String> receiveMoney(
-            @PathVariable String idVirement, @RequestBody VirementReceiveDTO reponse
+    public ResponseEntity<Object> receiveMoney(
+            @PathVariable String idVirement, @RequestBody String json
     ){
-        return virementService.receiveMoney(idVirement, reponse);
+        VirementReceiveDTO response = new VirementReceiveDTO();
+
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            response = objectMapper.readValue(json, VirementReceiveDTO.class);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return new ResponseEntity<>(Map.of("message", virementService.receiveMoney(idVirement, response)), HttpStatus.OK);
     }
 
     @ResponseBody
