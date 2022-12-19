@@ -17,6 +17,12 @@ public class TransactionController {
     VirementService virementService;
 
     @ResponseBody
+    @GetMapping("/getAll")
+    public ResponseEntity<Object> getAllTransactions(){
+        return this.virementService.getAllTransactions();
+    }
+
+    @ResponseBody
     @PostMapping("/send")
     public ResponseEntity<Object> sendMoney(
             @RequestBody String json

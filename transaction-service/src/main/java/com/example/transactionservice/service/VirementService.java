@@ -23,6 +23,10 @@ public class VirementService {
     private CompteRestClient compteRestClient ;
     private TransactionRepository transactionRepository;
 
+    public ResponseEntity<Object> getAllTransactions(){
+        return new ResponseEntity<>( this.transactionRepository.findAll(), HttpStatus.OK);
+    }
+
     public ResponseEntity<Object> sendMoney(VirementSendDTO virementSendDTO) {
         try {
             Compte compteRecepteur = compteRestClient.accountByNumero(virementSendDTO.getNumCompteRecepteur());
