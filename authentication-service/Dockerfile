@@ -10,7 +10,7 @@ WORKDIR app/
 #ARG JAR_FILE=target/account-service-0.0.1-SNAPSHOT.jar
 #COPY --from=DEPS /app/${JAR_FILE} account-service-0.0.1-SNAPSHOT.jar
 COPY pom.xml .
-RUN mvn -e -B dependency:resolve
+RUN mvn -e -B dependency:resolve -DskipTests=true
 COPY src ./src
 RUN mvn clean -e -B package -DskipTests=true
 

@@ -12,7 +12,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -21,7 +23,11 @@ public class VirementService {
     private CompteRestClient compteRestClient ;
     private TransactionRepository transactionRepository;
 
-    public ResponseEntity<String> sendMoney(VirementSendDTO virementSendDTO) {
+    public ResponseEntity<Object> getAllTransactions(){
+        return new ResponseEntity<>( this.transactionRepository.findAll(), HttpStatus.OK);
+    }
+
+    public ResponseEntity<Object> sendMoney(VirementSendDTO virementSendDTO) {
         try {
             Compte compteRecepteur = compteRestClient.accountByNumero(virementSendDTO.getNumCompteRecepteur());
             Compte compteEmetteur = compteRestClient.accountByNumero(virementSendDTO.getNumCompteEmetteur());
@@ -49,15 +55,15 @@ public class VirementService {
 
                 // Sauvegarde le virement dans la bd
                 transactionRepository.save(virement);
-                return new ResponseEntity<>("Virement effectué avec succès. En attente de la confirmation du récepteur", HttpStatus.OK);
+                return new ResponseEntity<>(Map.of("message", "Virement effectué avec succès. En attente de la confirmation du récepteur"), HttpStatus.OK);
             }
 /*            virement.setStatut(StatutVirement.ECHEC);
             transactionRepository.save(virement);*/
-            return new ResponseEntity<>("Solde du compte émetteur insuffisant", HttpStatus.NOT_ACCEPTABLE);
+            return new ResponseEntity<>(Map.of("message", "Solde du compte émetteur insuffisant"), HttpStatus.NOT_ACCEPTABLE);
 
         }
         catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.FORBIDDEN);
         }
             }
 

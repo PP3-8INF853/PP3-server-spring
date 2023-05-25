@@ -7,11 +7,19 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
 @AllArgsConstructor
 public class AccountController {
     AccountService accountService;
+
+    @ResponseBody
+    @GetMapping("/accounts")
+    public List<Compte> findAll(){
+        return accountService.findAll();
+    }
 
     @ResponseBody
     @GetMapping("/accounts/{id}")

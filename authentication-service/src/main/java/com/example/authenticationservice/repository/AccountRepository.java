@@ -4,8 +4,13 @@ import com.example.authenticationservice.entities.Compte;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @FeignClient(name = "account-service")
 public interface AccountRepository {
+
+    @GetMapping("/accounts")
+    public List<Compte> findAll();
     @GetMapping("/accounts/numero/{numero}")
     public Compte accountByNumero(@PathVariable("numero") String numero);
 

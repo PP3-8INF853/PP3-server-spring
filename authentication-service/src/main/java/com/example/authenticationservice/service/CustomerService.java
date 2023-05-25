@@ -31,6 +31,10 @@ public class CustomerService {
     public List<Customer> findAll(){
         return this.customerRepository.findAll();
     }
+
+    public Optional<Customer> findById(String id){
+        return this.customerRepository.findById(id);
+    }
     public Customer create(CustomerSignUpDTO customerSignUpDTO){
         Customer customer = new Customer(customerSignUpDTO.username, customerSignUpDTO.firstname,
                 customerSignUpDTO.lastname, customerSignUpDTO.password, customerSignUpDTO.email, customerSignUpDTO.phoneNumber);
@@ -39,13 +43,10 @@ public class CustomerService {
 
         Compte compte = new Compte();
         compte.setSolde(0d);
-        compte.setNumero(String.valueOf(ThreadLocalRandom.current().nextInt(1, 34234 + 1)));
+        compte.setNumero(String.valueOf(ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE)));
         compte.setUserId(customer.id);
 
         accountRepository.saveAccount(compte);
-
-        //Util.makeHttpPostRequest("http://localhost:4444/account-service/accounts", compte);
-
         return customer;
     }
 
@@ -54,5 +55,9 @@ public class CustomerService {
                 Objects.equals(custom.username, customerLoginDTO.username) && Objects.equals(custom.password, customerLoginDTO.password)).findFirst();
 
         return found.map(customer -> customer.id).orElse(null);
+    }
+
+    public Optional<Compte> findCustomerAccount(String customerId){
+        return this.accountRepository.findAll().stream().filter(acc -> acc.getUserId().equals(customerId)).findFirst();
     }
 }
